@@ -1,0 +1,51 @@
+package me.maciejb.redisbench
+
+import java.time.Duration
+import java.util.Properties
+
+import com.typesafe.config.{ConfigFactory, Config}
+
+
+import scala.language.implicitConversions
+
+/**
+  * Extension methods to make Typesafe Config easier to use.
+  * Inspired by the same class in Slick.
+  * Differences between Slick's version include:
+  * - using [[java.time.Duration]] instead of [[scala.concurrent.duration.Duration]] to match typesafe-config 1.3.0 API.
+  */
+class ConfigExtensionMethods(val c: Config) extends AnyVal {
+
+  import scala.collection.JavaConverters._
+
+  def getBooleanOr(path: String, default: => Boolean = false) = if (c.hasPath(path)) c.getBoolean(path) else default
+  def getIntOr(path: String, default: => Int = 0) = if (c.hasPath(path)) c.getInt(path) else default
+  def getLongOr(path: String, default: => Long = 0L) = if (c.hasPath(path)) c.getLong(path) else default
+  def getStringOr(path: String, default: => String = null) = if (c.hasPath(path)) c.getString(path) else default
+  def getConfigOr(path: String, default: => Config = ConfigFactory.empty()) =
+    if (c.hasPath(path)) c.getConfig(path) else default
+
+  def getDurationOr(path: String, default: => Duration = Duration.ZERO) =
+    if (c.hasPath(path)) c.getDuration(path) else default
+
+  def getPropertiesOr(path: String, default: => Properties = null) =
+    if (!c.hasPath(path)) default
+    else {
+      val props = new Properties(null)
+      c.getObject(path).asScala.foreach { case (k, v) => props.put(k, v.unwrapped.toString) }
+      props
+    }
+
+  def getBooleanOpt(path: String): Option[Boolean] = if (c.hasPath(path)) Some(c.getBoolean(path)) else None
+  def getIntOpt(path: String): Option[Int] = if (c.hasPath(path)) Some(c.getInt(path)) else None
+  def getLongOpt(path: String): Option[Long] = if (c.hasPath(path)) Some(c.getLong(path)) else None
+  def getStringOpt(path: String) = Option(getStringOr(path))
+  def getPropertiesOpt(path: String) = Option(getPropertiesOr(path))
+  def getDurationOpt(path: String) = if (c.hasPath(path)) Some(getDurationOr(path)) else None
+  def getConfigOpt(path: String) = if (c.hasPath(path)) Some(c.getConfig(path)) else None
+
+}
+
+object ConfigExtensionMethods {
+  @inline implicit def configExtensionMethods(c: Config): ConfigExtensionMethods = new ConfigExtensionMethods(c)
+}
