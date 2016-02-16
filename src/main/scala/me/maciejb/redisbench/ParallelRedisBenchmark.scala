@@ -112,6 +112,7 @@ object ParallelRedisBenchmarkApp {
       .include(classOf[ParallelRedisBenchmark].getSimpleName)
       .forks(1)
       .warmupIterations(10)
+      .jvmArgs("-Xmx4g")
       .build
     new Runner(opt).run
   }
